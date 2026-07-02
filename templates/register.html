@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+
+<div class="form-container">
+
+    <h2 class="text-center mb-4">Create Account</h2>
+
+    <form method="POST">
+
+        <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text"
+                   name="name"
+                   class="form-control"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email"
+                   name="email"
+                   class="form-control"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password"
+                   name="password"
+                   class="form-control"
+                   required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Contact Number</label>
+            <input type="text"
+                   name="contact"
+                   class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Register As</label>
+
+            <select name="role" class="form-select" required>
+                <option value="user">Trekker</option>
+                <option value="staff">Trek Staff</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">
+                Experience
+                <small class="text-muted">(For trek staff only)</small>
+            </label>
+
+            <textarea name="experience"
+                      class="form-control"
+                      rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">
+            Register
+        </button>
+
+    </form>
+
+    <p class="text-center mt-3">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Login here</a>
+    </p>
+
+</div>
+
+{% endblock %}
