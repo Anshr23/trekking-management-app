@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-from werkzeug.security import generate_password_hash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, StaffProfile, Trek, Booking
 
 app = Flask(__name__)
@@ -106,7 +106,94 @@ def register():
 # login.html
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            flash("No account found with this email.", "danger")
+            return redirect(url_for("login"))
+
+        if not check_password_hash(user.password, password):
+            flash("Incorrect password.", "danger")
+            return redirect(url_for("login"))
+
+        if user.is_blacklisted:
+            flash("Your account has been blacklisted. Contact the admin.", "danger")
+            return redirect(url_for("login"))
+
+        if user.role == "staff" and not user.is_approved:
+            flash("Your staff account is waiting for admin approval.", "warning")
+            return redirect(url_for("login"))
+
+        session["user_id"] = user.id
+        session["name"] = user.name
+        session["role"] = user.role
+
+        if user.role == "admin":
+            return redirect(url_for("admin_dashboard"))
+
+        elif user.role == "staff":
+            return redirect(url_for("staff_dashboard"))
+
+        else:
+            return redirect(url_for("user_dashboard"))
+
     return render_template("login.html")
+
+
+
+#logout
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("login"))
+
+
+@app.route("/admin/dashboard")
+def admin_dashboard():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    return render_template("admin/dashboard.html")
+
+
+@app.route("/staff/dashboard")
+def staff_dashboard():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "staff":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    return render_template("staff/dashboard.html")
+
+
+@app.route("/user/dashboard")
+def user_dashboard():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "user":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    return render_template("user/dashboard.html")
 
 
 

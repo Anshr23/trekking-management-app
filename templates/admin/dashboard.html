@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+
+<h2>Admin Dashboard</h2>
+
+<div class="dashboard-card">
+    <h4>Welcome, {{ session["name"] }}</h4>
+    <p>You are logged in as Administrator.</p>
+</div>
+
+{% endblock %}

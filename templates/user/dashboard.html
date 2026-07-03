@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Trekker Dashboard{% endblock %}
+
+{% block content %}
+
+<h2>Trekker Dashboard</h2>
+
+<div class="dashboard-card">
+    <h4>Welcome, {{ session["name"] }}</h4>
+    <p>Explore available treks and manage your bookings.</p>
+</div>
+
+{% endblock %}
