@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, StaffProfile, Trek, Booking
@@ -154,6 +155,8 @@ def logout():
     return redirect(url_for("login"))
 
 
+
+#admin route
 @app.route("/admin/dashboard")
 def admin_dashboard():
 
@@ -165,9 +168,220 @@ def admin_dashboard():
         flash("You are not authorized to access this page.", "danger")
         return redirect(url_for("home"))
 
-    return render_template("admin/dashboard.html")
+    total_treks = Trek.query.count()
+
+    total_users = User.query.filter_by(role="user").count()
+
+    total_staff = User.query.filter_by(role="staff").count()
+
+    total_bookings = Booking.query.count()
+
+    return render_template(
+        "admin/dashboard.html",
+        total_treks=total_treks,
+        total_users=total_users,
+        total_staff=total_staff,
+        total_bookings=total_bookings
+    )
+
+@app.route("/admin/treks")
+def admin_treks():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    treks = Trek.query.all()
+
+    return render_template(
+        "admin/treks.html",
+        treks=treks
+    )
 
 
+@app.route("/admin/treks/add", methods=["GET", "POST"])
+def add_trek():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    approved_staff = User.query.filter_by(
+        role="staff",
+        is_approved=True,
+        is_blacklisted=False
+    ).all()
+
+    if request.method == "POST":
+
+        name = request.form["name"]
+        location = request.form["location"]
+        difficulty = request.form["difficulty"]
+        duration = int(request.form["duration"])
+        available_slots = int(request.form["available_slots"])
+        status = request.form["status"]
+
+        start_date = datetime.strptime(
+            request.form["start_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        end_date = datetime.strptime(
+            request.form["end_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        staff_id = request.form["assigned_staff_id"]
+
+        if staff_id:
+            assigned_staff_id = int(staff_id)
+        else:
+            assigned_staff_id = None
+
+        if end_date < start_date:
+            flash("End date cannot be before start date.", "danger")
+
+            return render_template(
+                "admin/trek_form.html",
+                trek=None,
+                approved_staff=approved_staff
+            )
+
+        new_trek = Trek(
+            name=name,
+            location=location,
+            difficulty=difficulty,
+            duration=duration,
+            available_slots=available_slots,
+            assigned_staff_id=assigned_staff_id,
+            status=status,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        db.session.add(new_trek)
+        db.session.commit()
+
+        flash("Trek created successfully.", "success")
+
+        return redirect(url_for("admin_treks"))
+
+    return render_template(
+        "admin/trek_form.html",
+        trek=None,
+        approved_staff=approved_staff
+    )
+
+
+@app.route("/admin/treks/<int:trek_id>/edit", methods=["GET", "POST"])
+def edit_trek(trek_id):
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        flash("Trek not found.", "danger")
+        return redirect(url_for("admin_treks"))
+
+    approved_staff = User.query.filter_by(
+        role="staff",
+        is_approved=True,
+        is_blacklisted=False
+    ).all()
+
+    if request.method == "POST":
+
+        start_date = datetime.strptime(
+            request.form["start_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        end_date = datetime.strptime(
+            request.form["end_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        if end_date < start_date:
+            flash("End date cannot be before start date.", "danger")
+
+            return render_template(
+                "admin/trek_form.html",
+                trek=trek,
+                approved_staff=approved_staff
+            )
+
+        trek.name = request.form["name"]
+        trek.location = request.form["location"]
+        trek.difficulty = request.form["difficulty"]
+        trek.duration = int(request.form["duration"])
+        trek.available_slots = int(request.form["available_slots"])
+        trek.status = request.form["status"]
+        trek.start_date = start_date
+        trek.end_date = end_date
+
+        staff_id = request.form["assigned_staff_id"]
+
+        if staff_id:
+            trek.assigned_staff_id = int(staff_id)
+        else:
+            trek.assigned_staff_id = None
+
+        db.session.commit()
+
+        flash("Trek updated successfully.", "success")
+
+        return redirect(url_for("admin_treks"))
+
+    return render_template(
+        "admin/trek_form.html",
+        trek=trek,
+        approved_staff=approved_staff
+    )
+
+
+@app.route("/admin/treks/<int:trek_id>/delete", methods=["POST"])
+def delete_trek(trek_id):
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        flash("Trek not found.", "danger")
+        return redirect(url_for("admin_treks"))
+
+    db.session.delete(trek)
+    db.session.commit()
+
+    flash("Trek deleted successfully.", "success")
+
+    return redirect(url_for("admin_treks"))
+
+
+
+
+#staff route
 @app.route("/staff/dashboard")
 def staff_dashboard():
 
@@ -182,6 +396,9 @@ def staff_dashboard():
     return render_template("staff/dashboard.html")
 
 
+
+
+#user route
 @app.route("/user/dashboard")
 def user_dashboard():
 
