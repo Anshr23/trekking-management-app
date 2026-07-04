@@ -14,6 +14,33 @@
 
 </div>
 
+<form method="GET" class="row mb-4">
+
+    <div class="col-md-8">
+
+        <input type="text"
+               name="search"
+               class="form-control"
+               placeholder="Search trek by name or ID"
+               value="{{ search }}">
+
+    </div>
+
+    <div class="col-md-4">
+
+        <button type="submit" class="btn btn-primary">
+            Search
+        </button>
+
+        <a href="{{ url_for('admin_treks') }}"
+           class="btn btn-outline-secondary">
+            Clear
+        </a>
+
+    </div>
+
+</form>
+
 
 {% if treks %}
 

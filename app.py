@@ -195,11 +195,22 @@ def admin_treks():
         flash("You are not authorized to access this page.", "danger")
         return redirect(url_for("home"))
 
-    treks = Trek.query.all()
+    search = request.args.get("search", "").strip()
+
+    query = Trek.query
+
+    if search:
+        if search.isdigit():
+            query = query.filter(Trek.id == int(search))
+        else:
+            query = query.filter(Trek.name.ilike(f"%{search}%"))
+
+    treks = query.all()
 
     return render_template(
         "admin/treks.html",
-        treks=treks
+        treks=treks,
+        search=search
     )
 
 
@@ -394,6 +405,159 @@ def staff_dashboard():
         return redirect(url_for("home"))
 
     return render_template("staff/dashboard.html")
+
+
+@app.route("/admin/staff")
+def admin_staff():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    search = request.args.get("search", "").strip()
+
+    query = User.query.filter_by(role="staff")
+
+    if search:
+        if search.isdigit():
+            query = query.filter(User.id == int(search))
+        else:
+            query = query.filter(User.name.ilike(f"%{search}%"))
+
+    staff_members = query.all()
+
+    return render_template(
+        "admin/staff.html",
+        staff_members=staff_members,
+        search=search
+    )
+
+
+@app.route("/admin/staff/<int:staff_id>/approve", methods=["POST"])
+def approve_staff(staff_id):
+
+    if "user_id" not in session or session["role"] != "admin":
+        flash("You are not authorized to perform this action.", "danger")
+        return redirect(url_for("login"))
+
+    staff = db.session.get(User, staff_id)
+
+    if not staff or staff.role != "staff":
+        flash("Staff member not found.", "danger")
+        return redirect(url_for("admin_staff"))
+
+    staff.is_approved = True
+
+    db.session.commit()
+
+    flash("Staff member approved successfully.", "success")
+
+    return redirect(url_for("admin_staff"))
+
+
+@app.route("/admin/staff/<int:staff_id>/blacklist", methods=["POST"])
+def toggle_staff_blacklist(staff_id):
+
+    if "user_id" not in session or session["role"] != "admin":
+        flash("You are not authorized to perform this action.", "danger")
+        return redirect(url_for("login"))
+
+    staff = db.session.get(User, staff_id)
+
+    if not staff or staff.role != "staff":
+        flash("Staff member not found.", "danger")
+        return redirect(url_for("admin_staff"))
+
+    staff.is_blacklisted = not staff.is_blacklisted
+
+    db.session.commit()
+
+    if staff.is_blacklisted:
+        flash("Staff member blacklisted successfully.", "warning")
+    else:
+        flash("Staff member removed from blacklist.", "success")
+
+    return redirect(url_for("admin_staff"))
+
+
+@app.route("/admin/users")
+def admin_users():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    search = request.args.get("search", "").strip()
+
+    query = User.query.filter_by(role="user")
+
+    if search:
+        if search.isdigit():
+            query = query.filter(User.id == int(search))
+        else:
+            query = query.filter(User.name.ilike(f"%{search}%"))
+
+    users = query.all()
+
+    return render_template(
+        "admin/users.html",
+        users=users,
+        search=search
+    )
+
+
+@app.route("/admin/users/<int:user_id>/blacklist", methods=["POST"])
+def toggle_user_blacklist(user_id):
+
+    if "user_id" not in session or session["role"] != "admin":
+        flash("You are not authorized to perform this action.", "danger")
+        return redirect(url_for("login"))
+
+    user = db.session.get(User, user_id)
+
+    if not user or user.role != "user":
+        flash("User not found.", "danger")
+        return redirect(url_for("admin_users"))
+
+    user.is_blacklisted = not user.is_blacklisted
+
+    db.session.commit()
+
+    if user.is_blacklisted:
+        flash("User blacklisted successfully.", "warning")
+    else:
+        flash("User removed from blacklist.", "success")
+
+    return redirect(url_for("admin_users"))
+
+
+@app.route("/admin/bookings")
+def admin_bookings():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "admin":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    bookings = Booking.query.order_by(
+        Booking.booking_date.desc()
+    ).all()
+
+    return render_template(
+        "admin/bookings.html",
+        bookings=bookings
+    )
 
 
 

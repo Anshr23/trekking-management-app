@@ -54,8 +54,23 @@
     <h4 class="mb-3">Management</h4>
 
     <a href="{{ url_for('admin_treks') }}"
-       class="btn btn-outline-primary me-2">
+       class="btn btn-outline-primary me-2 mb-2">
         Manage Treks
+    </a>
+
+    <a href="{{ url_for('admin_staff') }}"
+       class="btn btn-outline-success me-2 mb-2">
+        Manage Staff
+    </a>
+
+    <a href="{{ url_for('admin_users') }}"
+       class="btn btn-outline-warning me-2 mb-2">
+        Manage Users
+    </a>
+
+    <a href="{{ url_for('admin_bookings') }}"
+       class="btn btn-outline-dark mb-2">
+        View All Bookings
     </a>
 
 </div>
