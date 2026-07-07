@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Trekking History{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h2>My Trekking History</h2>
+
+    <a href="{{ url_for('user_dashboard') }}"
+       class="btn btn-secondary">
+        Back to Dashboard
+    </a>
+
+</div>
+
+
+{% if bookings %}
+
+<div class="table-responsive">
+
+    <table class="table table-bordered table-hover bg-white">
+
+        <thead class="table-dark">
+
+            <tr>
+                <th>Booking ID</th>
+                <th>Trek</th>
+                <th>Location</th>
+                <th>Difficulty</th>
+                <th>Booking Date</th>
+                <th>Trek Dates</th>
+                <th>Status</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for booking in bookings %}
+
+            <tr>
+
+                <td>{{ booking.id }}</td>
+
+                <td>{{ booking.trek.name }}</td>
+
+                <td>{{ booking.trek.location }}</td>
+
+                <td>{{ booking.trek.difficulty }}</td>
+
+                <td>
+                    {{ booking.booking_date.strftime("%d %b %Y") }}
+                </td>
+
+                <td>
+                    {{ booking.trek.start_date }}
+                    to
+                    {{ booking.trek.end_date }}
+                </td>
+
+                <td>
+
+                    {% if booking.status == "Completed" %}
+
+                        <span class="badge bg-success">
+                            Completed
+                        </span>
+
+                    {% elif booking.status == "Cancelled" %}
+
+                        <span class="badge bg-secondary">
+                            Cancelled
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge bg-primary">
+                            {{ booking.status }}
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+    You do not have any trekking history yet.
+</div>
+
+{% endif %}
+
+{% endblock %}

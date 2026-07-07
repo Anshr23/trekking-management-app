@@ -601,8 +601,6 @@ def staff_participants(trek_id):
 
 
 
-
-
 @app.route("/admin/users")
 def admin_users():
 
@@ -693,7 +691,211 @@ def user_dashboard():
         flash("You are not authorized to access this page.", "danger")
         return redirect(url_for("home"))
 
-    return render_template("user/dashboard.html")
+    user = db.session.get(User, session["user_id"])
+
+    if not user or user.is_blacklisted:
+        session.clear()
+        flash("Your account is not authorized.", "danger")
+        return redirect(url_for("login"))
+
+    search = request.args.get("search", "").strip()
+    difficulty = request.args.get("difficulty", "").strip()
+    location = request.args.get("location", "").strip()
+
+    query = Trek.query.filter_by(status="Open")
+
+    if search:
+        query = query.filter(Trek.name.ilike(f"%{search}%"))
+
+    if difficulty:
+        query = query.filter(Trek.difficulty == difficulty)
+
+    if location:
+        query = query.filter(Trek.location.ilike(f"%{location}%"))
+
+    available_treks = query.all()
+
+    active_bookings = Booking.query.filter_by(
+        user_id=user.id,
+        status="Booked"
+    ).all()
+
+    booked_trek_ids = [
+        booking.trek_id for booking in active_bookings
+    ]
+
+    return render_template(
+        "user/dashboard.html",
+        available_treks=available_treks,
+        active_bookings=active_bookings,
+        booked_trek_ids=booked_trek_ids,
+        search=search,
+        difficulty=difficulty,
+        location=location
+    )
+
+
+@app.route("/user/treks/<int:trek_id>/book", methods=["POST"])
+def book_trek(trek_id):
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "user":
+        flash("Only trekkers can book treks.", "danger")
+        return redirect(url_for("home"))
+
+    user = db.session.get(User, session["user_id"])
+
+    if not user or user.is_blacklisted:
+        session.clear()
+        flash("Your account is not authorized.", "danger")
+        return redirect(url_for("login"))
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        flash("Trek not found.", "danger")
+        return redirect(url_for("user_dashboard"))
+
+    if trek.status != "Open":
+        flash("This trek is not open for booking.", "danger")
+        return redirect(url_for("user_dashboard"))
+
+    if trek.available_slots <= 0:
+        flash("No slots are available for this trek.", "danger")
+        return redirect(url_for("user_dashboard"))
+
+    existing_booking = Booking.query.filter_by(
+        user_id=user.id,
+        trek_id=trek.id,
+        status="Booked"
+    ).first()
+
+    if existing_booking:
+        flash("You have already booked this trek.", "warning")
+        return redirect(url_for("user_dashboard"))
+
+    new_booking = Booking(
+        user_id=user.id,
+        trek_id=trek.id,
+        status="Booked"
+    )
+
+    trek.available_slots -= 1
+
+    db.session.add(new_booking)
+    db.session.commit()
+
+    flash("Trek booked successfully.", "success")
+
+    return redirect(url_for("user_dashboard"))
+
+
+@app.route("/user/bookings/<int:booking_id>/cancel", methods=["POST"])
+def cancel_booking(booking_id):
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "user":
+        flash("You are not authorized to perform this action.", "danger")
+        return redirect(url_for("home"))
+
+    booking = db.session.get(Booking, booking_id)
+
+    if not booking:
+        flash("Booking not found.", "danger")
+        return redirect(url_for("user_dashboard"))
+
+    if booking.user_id != session["user_id"]:
+        flash("You cannot cancel another user's booking.", "danger")
+        return redirect(url_for("user_dashboard"))
+
+    if booking.status != "Booked":
+        flash("This booking cannot be cancelled.", "warning")
+        return redirect(url_for("user_dashboard"))
+
+    booking.status = "Cancelled"
+    booking.trek.available_slots += 1
+
+    db.session.commit()
+
+    flash("Booking cancelled successfully.", "success")
+
+    return redirect(url_for("user_dashboard"))
+
+
+
+@app.route("/user/history")
+def user_history():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "user":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    bookings = Booking.query.filter_by(
+        user_id=session["user_id"]
+    ).order_by(
+        Booking.booking_date.desc()
+    ).all()
+
+    return render_template(
+        "user/history.html",
+        bookings=bookings
+    )
+
+
+
+@app.route("/user/profile", methods=["GET", "POST"])
+def user_profile():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "user":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    user = db.session.get(User, session["user_id"])
+
+    if not user or user.is_blacklisted:
+        session.clear()
+        flash("Your account is not authorized.", "danger")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+
+        name = request.form["name"].strip()
+        contact = request.form["contact"].strip()
+
+        if not name:
+            flash("Name cannot be empty.", "danger")
+            return redirect(url_for("user_profile"))
+
+        user.name = name
+        user.contact = contact
+
+        db.session.commit()
+
+        session["name"] = user.name
+
+        flash("Profile updated successfully.", "success")
+
+        return redirect(url_for("user_profile"))
+
+    return render_template(
+        "user/profile.html",
+        user=user
+    )
+
 
 
 

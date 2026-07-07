@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+
+<div class="form-container">
+
+    <h2 class="text-center mb-4">
+        Edit Profile
+    </h2>
+
+
+    <form method="POST">
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Full Name
+            </label>
+
+            <input type="text"
+                   name="name"
+                   class="form-control"
+                   value="{{ user.name }}"
+                   required>
+
+        </div>
+
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Email
+            </label>
+
+            <input type="email"
+                   class="form-control"
+                   value="{{ user.email }}"
+                   disabled>
+
+        </div>
+
+
+        <div class="mb-3">
+
+            <label class="form-label">
+                Contact Number
+            </label>
+
+            <input type="text"
+                   name="contact"
+                   class="form-control"
+                   value="{{ user.contact or '' }}">
+
+        </div>
+
+
+        <button type="submit"
+                class="btn btn-primary w-100">
+            Save Changes
+        </button>
+
+    </form>
+
+
+    <a href="{{ url_for('user_dashboard') }}"
+       class="btn btn-secondary w-100 mt-2">
+        Back to Dashboard
+    </a>
+
+</div>
+
+{% endblock %}
