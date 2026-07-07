@@ -600,6 +600,59 @@ def staff_participants(trek_id):
     )
 
 
+@app.route("/staff/profile", methods=["GET", "POST"])
+def staff_profile():
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "staff":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    staff = db.session.get(User, session["user_id"])
+
+    if not staff or not staff.is_approved or staff.is_blacklisted:
+        session.clear()
+        flash("Your staff account is not authorized.", "danger")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+
+        name = request.form["name"].strip()
+        contact = request.form["contact"].strip()
+        experience = request.form["experience"].strip()
+
+        if not name:
+            flash("Name cannot be empty.", "danger")
+            return redirect(url_for("staff_profile"))
+
+        staff.name = name
+        staff.contact = contact
+
+        if staff.staff_profile:
+            staff.staff_profile.experience = experience
+        else:
+            new_profile = StaffProfile(
+                user_id=staff.id,
+                experience=experience
+            )
+            db.session.add(new_profile)
+
+        db.session.commit()
+
+        session["name"] = staff.name
+
+        flash("Staff profile updated successfully.", "success")
+
+        return redirect(url_for("staff_profile"))
+
+    return render_template(
+        "staff/profile.html",
+        staff=staff
+    )
+
 
 @app.route("/admin/users")
 def admin_users():
