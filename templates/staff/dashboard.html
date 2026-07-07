@@ -4,11 +4,95 @@
 
 {% block content %}
 
-<h2>Trek Staff Dashboard</h2>
-
-<div class="dashboard-card">
-    <h4>Welcome, {{ session["name"] }}</h4>
-    <p>You are logged in as Trek Staff.</p>
+<div class="mb-4">
+    <h2>Trek Staff Dashboard</h2>
+    <p class="text-muted">
+        Welcome, {{ session["name"] }}
+    </p>
 </div>
+
+
+{% if assigned_treks %}
+
+<div class="row">
+
+    {% for trek in assigned_treks %}
+
+    <div class="col-md-6 mb-4">
+
+        <div class="dashboard-card h-100">
+
+            <h4>{{ trek.name }}</h4>
+
+            <p>
+                <strong>Location:</strong>
+                {{ trek.location }}
+            </p>
+
+            <p>
+                <strong>Difficulty:</strong>
+                {{ trek.difficulty }}
+            </p>
+
+            <p>
+                <strong>Duration:</strong>
+                {{ trek.duration }} days
+            </p>
+
+            <p>
+                <strong>Available Slots:</strong>
+                {{ trek.available_slots }}
+            </p>
+
+            <p>
+                <strong>Registered Participants:</strong>
+                {{ trek.bookings | selectattr("status", "equalto", "Booked") | list | length }}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+
+                {% if trek.status == "Open" %}
+                    <span class="badge bg-success">Open</span>
+
+                {% elif trek.status == "Completed" %}
+                    <span class="badge bg-primary">Completed</span>
+
+                {% elif trek.status == "Closed" %}
+                    <span class="badge bg-danger">Closed</span>
+
+                {% else %}
+                    <span class="badge bg-secondary">
+                        {{ trek.status }}
+                    </span>
+                {% endif %}
+            </p>
+
+
+            <a href="{{ url_for('staff_manage_trek', trek_id=trek.id) }}"
+               class="btn btn-warning">
+                Manage Trek
+            </a>
+
+            <a href="{{ url_for('staff_participants', trek_id=trek.id) }}"
+               class="btn btn-outline-primary">
+                View Participants
+            </a>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+    No treks are currently assigned to you.
+</div>
+
+{% endif %}
 
 {% endblock %}

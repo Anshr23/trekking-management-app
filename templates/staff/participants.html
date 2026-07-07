@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Trek Participants{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2>Participants</h2>
+        <p class="text-muted">{{ trek.name }}</p>
+    </div>
+
+    <a href="{{ url_for('staff_dashboard') }}"
+       class="btn btn-secondary">
+        Back to Dashboard
+    </a>
+
+</div>
+
+
+{% if bookings %}
+
+<div class="table-responsive">
+
+    <table class="table table-bordered table-hover bg-white">
+
+        <thead class="table-dark">
+
+            <tr>
+                <th>Booking ID</th>
+                <th>User ID</th>
+                <th>Participant Name</th>
+                <th>Email</th>
+                <th>Contact</th>
+                <th>Booking Date</th>
+                <th>Status</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for booking in bookings %}
+
+            <tr>
+
+                <td>{{ booking.id }}</td>
+
+                <td>{{ booking.user.id }}</td>
+
+                <td>{{ booking.user.name }}</td>
+
+                <td>{{ booking.user.email }}</td>
+
+                <td>
+                    {{ booking.user.contact or "Not Provided" }}
+                </td>
+
+                <td>
+                    {{ booking.booking_date.strftime("%d %b %Y") }}
+                </td>
+
+                <td>
+                    <span class="badge bg-primary">
+                        {{ booking.status }}
+                    </span>
+                </td>
+
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% else %}
+
+<div class="alert alert-info">
+    No participants have booked this trek yet.
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -404,7 +404,21 @@ def staff_dashboard():
         flash("You are not authorized to access this page.", "danger")
         return redirect(url_for("home"))
 
-    return render_template("staff/dashboard.html")
+    staff = db.session.get(User, session["user_id"])
+
+    if not staff or not staff.is_approved or staff.is_blacklisted:
+        session.clear()
+        flash("Your account is not authorized to access the staff dashboard.", "danger")
+        return redirect(url_for("login"))
+
+    assigned_treks = Trek.query.filter_by(
+        assigned_staff_id=staff.id
+    ).all()
+
+    return render_template(
+        "staff/dashboard.html",
+        assigned_treks=assigned_treks
+    )
 
 
 @app.route("/admin/staff")
@@ -482,6 +496,111 @@ def toggle_staff_blacklist(staff_id):
         flash("Staff member removed from blacklist.", "success")
 
     return redirect(url_for("admin_staff"))
+
+
+@app.route("/staff/treks/<int:trek_id>/manage", methods=["GET", "POST"])
+def staff_manage_trek(trek_id):
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "staff":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        flash("Trek not found.", "danger")
+        return redirect(url_for("staff_dashboard"))
+
+    if trek.assigned_staff_id != session["user_id"]:
+        flash("You can only manage treks assigned to you.", "danger")
+        return redirect(url_for("staff_dashboard"))
+
+    staff = db.session.get(User, session["user_id"])
+
+    if not staff.is_approved or staff.is_blacklisted:
+        session.clear()
+        flash("Your staff account is not authorized.", "danger")
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+
+        available_slots = int(request.form["available_slots"])
+        status = request.form["status"]
+
+        allowed_statuses = [
+            "Pending",
+            "Approved",
+            "Open",
+            "Closed",
+            "Ongoing",
+            "Completed"
+        ]
+
+        if available_slots < 0:
+            flash("Available slots cannot be negative.", "danger")
+            return redirect(url_for("staff_manage_trek", trek_id=trek.id))
+
+        if status not in allowed_statuses:
+            flash("Invalid trek status.", "danger")
+            return redirect(url_for("staff_manage_trek", trek_id=trek.id))
+
+        trek.available_slots = available_slots
+        trek.status = status
+
+        if status == "Completed":
+            for booking in trek.bookings:
+                if booking.status == "Booked":
+                    booking.status = "Completed"
+
+        db.session.commit()
+
+        flash("Trek updated successfully.", "success")
+
+        return redirect(url_for("staff_dashboard"))
+
+    return render_template(
+        "staff/manage_trek.html",
+        trek=trek
+    )
+
+
+@app.route("/staff/treks/<int:trek_id>/participants")
+def staff_participants(trek_id):
+
+    if "user_id" not in session:
+        flash("Please log in first.", "warning")
+        return redirect(url_for("login"))
+
+    if session["role"] != "staff":
+        flash("You are not authorized to access this page.", "danger")
+        return redirect(url_for("home"))
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        flash("Trek not found.", "danger")
+        return redirect(url_for("staff_dashboard"))
+
+    if trek.assigned_staff_id != session["user_id"]:
+        flash("You can only view participants of your assigned treks.", "danger")
+        return redirect(url_for("staff_dashboard"))
+
+    bookings = Booking.query.filter_by(
+        trek_id=trek.id
+    ).all()
+
+    return render_template(
+        "staff/participants.html",
+        trek=trek,
+        bookings=bookings
+    )
+
+
+
 
 
 @app.route("/admin/users")
