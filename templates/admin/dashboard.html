@@ -75,4 +75,98 @@
 
 </div>
 
+<hr class="my-5">
+
+<h3 class="mb-4">Statistics and Visualizations</h3>
+
+<div class="row">
+
+    <div class="col-md-6 mb-4">
+        <div class="dashboard-card">
+            <h5 class="text-center mb-3">Treks by Status</h5>
+
+            <canvas id="trekStatusChart"></canvas>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="dashboard-card">
+            <h5 class="text-center mb-3">Bookings by Status</h5>
+
+            <canvas id="bookingStatusChart"></canvas>
+        </div>
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+    const trekStatusChart = new Chart(
+        document.getElementById("trekStatusChart"),
+        {
+            type: "bar",
+
+            data: {
+                labels: {{ trek_statuses | tojson }},
+
+                datasets: [{
+                    label: "Number of Treks",
+                    data: {{ trek_status_counts | tojson }},
+                    backgroundColor: [
+                        "#ffc107",
+                        "#0dcaf0",
+                        "#198754",
+                        "#dc3545",
+                        "#6f42c1",
+                        "#0d6efd"
+                    ]
+                }]
+            },
+
+            options: {
+                responsive: true,
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        }
+    );
+
+
+    const bookingStatusChart = new Chart(
+        document.getElementById("bookingStatusChart"),
+        {
+            type: "doughnut",
+
+            data: {
+                labels: {{ booking_statuses | tojson }},
+
+                datasets: [{
+                    data: {{ booking_status_counts | tojson }},
+                    backgroundColor: [
+                        "#0d6efd",
+                        "#6c757d",
+                        "#198754"
+                    ]
+                }]
+            },
+
+            options: {
+                responsive: true
+            }
+        }
+    );
+
+</script>
+
 {% endblock %}

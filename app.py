@@ -169,20 +169,50 @@ def admin_dashboard():
         return redirect(url_for("home"))
 
     total_treks = Trek.query.count()
-
     total_users = User.query.filter_by(role="user").count()
-
     total_staff = User.query.filter_by(role="staff").count()
-
     total_bookings = Booking.query.count()
+
+    trek_statuses = [
+        "Pending",
+        "Approved",
+        "Open",
+        "Closed",
+        "Ongoing",
+        "Completed"
+    ]
+
+    trek_status_counts = []
+
+    for status in trek_statuses:
+        count = Trek.query.filter_by(status=status).count()
+        trek_status_counts.append(count)
+
+    booking_statuses = [
+        "Booked",
+        "Cancelled",
+        "Completed"
+    ]
+
+    booking_status_counts = []
+
+    for status in booking_statuses:
+        count = Booking.query.filter_by(status=status).count()
+        booking_status_counts.append(count)
 
     return render_template(
         "admin/dashboard.html",
         total_treks=total_treks,
         total_users=total_users,
         total_staff=total_staff,
-        total_bookings=total_bookings
+        total_bookings=total_bookings,
+        trek_statuses=trek_statuses,
+        trek_status_counts=trek_status_counts,
+        booking_statuses=booking_statuses,
+        booking_status_counts=booking_status_counts
     )
+
+
 
 @app.route("/admin/treks")
 def admin_treks():
