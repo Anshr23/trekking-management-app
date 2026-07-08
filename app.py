@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, StaffProfile, Trek, Booking
 
@@ -949,6 +949,275 @@ def user_profile():
         user=user
     )
 
+
+
+
+#for api implementation
+@app.route("/api/treks", methods=["GET"])
+def api_get_treks():
+
+    treks = Trek.query.all()
+
+    result = []
+
+    for trek in treks:
+
+        result.append({
+            "id": trek.id,
+            "name": trek.name,
+            "location": trek.location,
+            "difficulty": trek.difficulty,
+            "duration": trek.duration,
+            "available_slots": trek.available_slots,
+            "assigned_staff_id": trek.assigned_staff_id,
+            "status": trek.status,
+            "start_date": str(trek.start_date),
+            "end_date": str(trek.end_date)
+        })
+
+    return jsonify(result)
+
+
+@app.route("/api/treks/<int:trek_id>", methods=["GET"])
+def api_get_trek(trek_id):
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        return jsonify({
+            "error": "Trek not found"
+        }), 404
+
+    return jsonify({
+        "id": trek.id,
+        "name": trek.name,
+        "location": trek.location,
+        "difficulty": trek.difficulty,
+        "duration": trek.duration,
+        "available_slots": trek.available_slots,
+        "assigned_staff_id": trek.assigned_staff_id,
+        "status": trek.status,
+        "start_date": str(trek.start_date),
+        "end_date": str(trek.end_date)
+    })
+
+
+@app.route("/api/treks", methods=["POST"])
+def api_create_trek():
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "error": "JSON data is required"
+        }), 400
+
+    required_fields = [
+        "name",
+        "location",
+        "difficulty",
+        "duration",
+        "available_slots",
+        "status",
+        "start_date",
+        "end_date"
+    ]
+
+    for field in required_fields:
+        if field not in data:
+            return jsonify({
+                "error": f"{field} is required"
+            }), 400
+
+    try:
+
+        start_date = datetime.strptime(
+            data["start_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        end_date = datetime.strptime(
+            data["end_date"],
+            "%Y-%m-%d"
+        ).date()
+
+        if end_date < start_date:
+            return jsonify({
+                "error": "End date cannot be before start date"
+            }), 400
+
+        if data["difficulty"] not in ["Easy", "Moderate", "Hard"]:
+            return jsonify({
+                "error": "Invalid difficulty"
+            }), 400
+
+        new_trek = Trek(
+            name=data["name"],
+            location=data["location"],
+            difficulty=data["difficulty"],
+            duration=int(data["duration"]),
+            available_slots=int(data["available_slots"]),
+            assigned_staff_id=data.get("assigned_staff_id"),
+            status=data["status"],
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        db.session.add(new_trek)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Trek created successfully",
+            "trek_id": new_trek.id
+        }), 201
+
+    except (ValueError, TypeError):
+
+        return jsonify({
+            "error": "Invalid data format"
+        }), 400
+    
+
+
+@app.route("/api/treks/<int:trek_id>", methods=["PUT"])
+def api_update_trek(trek_id):
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        return jsonify({
+            "error": "Trek not found"
+        }), 404
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "error": "JSON data is required"
+        }), 400
+
+    try:
+
+        if "name" in data:
+            trek.name = data["name"]
+
+        if "location" in data:
+            trek.location = data["location"]
+
+        if "difficulty" in data:
+
+            if data["difficulty"] not in ["Easy", "Moderate", "Hard"]:
+                return jsonify({
+                    "error": "Invalid difficulty"
+                }), 400
+
+            trek.difficulty = data["difficulty"]
+
+        if "duration" in data:
+            trek.duration = int(data["duration"])
+
+        if "available_slots" in data:
+            trek.available_slots = int(data["available_slots"])
+
+        if "status" in data:
+            trek.status = data["status"]
+
+        if "assigned_staff_id" in data:
+            trek.assigned_staff_id = data["assigned_staff_id"]
+
+        if "start_date" in data:
+            trek.start_date = datetime.strptime(
+                data["start_date"],
+                "%Y-%m-%d"
+            ).date()
+
+        if "end_date" in data:
+            trek.end_date = datetime.strptime(
+                data["end_date"],
+                "%Y-%m-%d"
+            ).date()
+
+        if trek.end_date < trek.start_date:
+            return jsonify({
+                "error": "End date cannot be before start date"
+            }), 400
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "Trek updated successfully"
+        })
+
+    except (ValueError, TypeError):
+
+        db.session.rollback()
+
+        return jsonify({
+            "error": "Invalid data format"
+        }), 400
+    
+
+
+@app.route("/api/treks/<int:trek_id>", methods=["DELETE"])
+def api_delete_trek(trek_id):
+
+    trek = db.session.get(Trek, trek_id)
+
+    if not trek:
+        return jsonify({
+            "error": "Trek not found"
+        }), 404
+
+    db.session.delete(trek)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Trek deleted successfully"
+    })
+
+
+
+@app.route("/api/users", methods=["GET"])
+def api_get_users():
+
+    users = User.query.all()
+
+    result = []
+
+    for user in users:
+
+        result.append({
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "contact": user.contact,
+            "is_approved": user.is_approved,
+            "is_blacklisted": user.is_blacklisted
+        })
+
+    return jsonify(result)
+
+
+
+@app.route("/api/bookings", methods=["GET"])
+def api_get_bookings():
+
+    bookings = Booking.query.all()
+
+    result = []
+
+    for booking in bookings:
+
+        result.append({
+            "id": booking.id,
+            "user_id": booking.user_id,
+            "trek_id": booking.trek_id,
+            "booking_date": str(booking.booking_date),
+            "status": booking.status
+        })
+
+    return jsonify(result)
 
 
 
