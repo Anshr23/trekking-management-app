@@ -1005,6 +1005,11 @@ def api_get_trek(trek_id):
 @app.route("/api/treks", methods=["POST"])
 def api_create_trek():
 
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({
+            "error": "Admin authentication required"
+        }), 401
+
     data = request.get_json()
 
     if not data:
@@ -1081,6 +1086,11 @@ def api_create_trek():
 
 @app.route("/api/treks/<int:trek_id>", methods=["PUT"])
 def api_update_trek(trek_id):
+
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({
+            "error": "Admin authentication required"
+        }), 401
 
     trek = db.session.get(Trek, trek_id)
 
@@ -1160,6 +1170,11 @@ def api_update_trek(trek_id):
 
 @app.route("/api/treks/<int:trek_id>", methods=["DELETE"])
 def api_delete_trek(trek_id):
+
+    if "user_id" not in session or session.get("role") != "admin":
+        return jsonify({
+            "error": "Admin authentication required"
+        }), 401
 
     trek = db.session.get(Trek, trek_id)
 
