@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Trekking Management{% endblock %}
+
+{% block content %}
+
+<div class="hero-section text-center">
+
+    <h1 class="display-4 fw-bold">
+        Trekking Management Application
+    </h1>
+
+    <p class="lead text-muted mt-3">
+        Discover treks, manage bookings, and explore new adventures.
+    </p>
+
+    <div class="mt-4">
+
+        {% if session.get("user_id") %}
+
+            {% if session.get("role") == "admin" %}
+
+                <a href="{{ url_for('admin_dashboard') }}"
+                   class="btn btn-primary btn-lg me-2">
+                    Go to Admin Dashboard
+                </a>
+
+            {% elif session.get("role") == "staff" %}
+
+                <a href="{{ url_for('staff_dashboard') }}"
+                   class="btn btn-primary btn-lg me-2">
+                    Go to Staff Dashboard
+                </a>
+
+            {% else %}
+
+                <a href="{{ url_for('user_dashboard') }}"
+                   class="btn btn-primary btn-lg me-2">
+                    Explore Available Treks
+                </a>
+
+            {% endif %}
+
+        {% else %}
+
+            <a href="{{ url_for('login') }}"
+               class="btn btn-primary btn-lg me-2">
+                Login
+            </a>
+
+            <a href="{{ url_for('register') }}"
+               class="btn btn-outline-dark btn-lg">
+                Register
+            </a>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<div class="row mt-5">
+
+    <div class="col-md-4 mb-4">
+
+        <div class="dashboard-card h-100 text-center">
+
+            <h3>For Trekkers</h3>
+
+            <p class="text-muted mt-3">
+                Search treks by location and difficulty,
+                book available treks, and track your trekking history.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-4 mb-4">
+
+        <div class="dashboard-card h-100 text-center">
+
+            <h3>For Trek Staff</h3>
+
+            <p class="text-muted mt-3">
+                Manage assigned treks, update availability and status,
+                and view registered participants.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-4 mb-4">
+
+        <div class="dashboard-card h-100 text-center">
+
+            <h3>For Administrators</h3>
+
+            <p class="text-muted mt-3">
+                Manage treks, users, staff approvals, bookings,
+                assignments, and trekking statistics.
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="text-center mt-4 mb-5">
+
+    <h2>Plan. Explore. Trek.</h2>
+
+    <p class="text-muted">
+        A simple platform connecting trekkers, trek staff, and administrators.
+    </p>
+
+</div>
+
+{% endblock %}

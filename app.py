@@ -5,6 +5,7 @@ from models import db, User, StaffProfile, Trek, Booking
 
 app = Flask(__name__)
 
+#hardcoded secret ke, will change later !!
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///trekking.db"
 app.config["SECRET_KEY"] = "trekking-secret-key"
 
@@ -37,7 +38,7 @@ with app.app_context():
 #     return "Trekking Management Application is running!"
 @app.route("/")
 def home():
-    return render_template("base.html")
+    return render_template("index.html")
 
 
 
