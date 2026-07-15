@@ -1,0 +1,19 @@
+openapi: 3.0.0
+
+info:
+  title: Trekking Management Application API
+  version: 1.0.0
+
+paths:
+  /api/treks:
+    get:
+      summary: Get all treks
+      responses:
+        '200':
+          description: List of all treks
+
+    post:
+      summary: Create a new trek
+      responses:
+        '201':
+          description: Trek created successfully
