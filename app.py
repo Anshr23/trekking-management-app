@@ -3,15 +3,18 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, StaffProfile, Trek, Booking
 
+#creates a flask application
 app = Flask(__name__)
 
 #hardcoded secret ke, will change later !!
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///trekking.db"
 app.config["SECRET_KEY"] = "trekking-secret-key"
 
+#connects db to app(flask)
 db.init_app(app)
 
-
+#initialize db through app
+#creates /instances/trekking.db
 with app.app_context():
     db.create_all()
 
@@ -22,6 +25,7 @@ with app.app_context():
             name="Admin",
             email="admin@tma.com",
             password=generate_password_hash("admin123"),
+            age="21",
             role="admin",
             is_approved=True,
             is_blacklisted=False
@@ -50,6 +54,7 @@ def register():
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
+        age = request.form["age"]
         contact = request.form["contact"]
         role = request.form["role"]
         experience = request.form["experience"]
@@ -58,7 +63,7 @@ def register():
 
         if existing_user:
             flash("Email already registered.", "danger")
-            return redirect(url_for("register"))
+            return redirect(url_for("login"))
 
         if role not in ["user", "staff"]:
             flash("Invalid role selected.", "danger")
@@ -72,6 +77,7 @@ def register():
         new_user = User(
             name=name,
             email=email,
+            age=age,
             password=generate_password_hash(password),
             role=role,
             contact=contact,
@@ -959,6 +965,7 @@ def user_profile():
 
         name = request.form["name"].strip()
         contact = request.form["contact"].strip()
+        age = request.form["age"].strip()
 
         if not name:
             flash("Name cannot be empty.", "danger")
