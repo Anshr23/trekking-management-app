@@ -4,10 +4,6 @@ Trekking Management Application is a role-based web application developed as par
 
 The application allows administrators, trek staff, and trekkers to manage trekking activities, staff assignments, participant bookings, trek availability, and trekking history.
 
-**Home Page:** [**Trekking Management Application**](https://your-trekking-app-home-page.com)
-
-**Dashboard:** [**Trekking Management Dashboard**](https://your-trekking-app-dashboard.com)
-
 ---
 
 ## Screenshots
@@ -15,13 +11,13 @@ The application allows administrators, trek staff, and trekkers to manage trekki
 ### User Experience
 
 <p align="center">
-  <img src="./static/____________.png" alt="Trekking Management Application user experience" width="700" />
+  <img src="./static/homepage.png" alt="Trekking Management Application user experience" width="700" />
 </p>
 
 ### Admin Dashboard
 
 <p align="center">
-  <img src="./static/____________.png" alt="Trekking Management Application admin dashboard" width="700" />
+  <img src="./static/admin.png" alt="Trekking Management Application admin dashboard" width="700" />
 </p>
 
 ---
